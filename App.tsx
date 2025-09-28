@@ -10,7 +10,7 @@ import HomeScreen from './screens/HomeScreen';
 
 export type RootStackParamList = {
   Login: undefined;
-  Cadastro: undefined; // aqui estava errado
+  Cadastro: undefined; 
   Home: undefined;
 };
 
