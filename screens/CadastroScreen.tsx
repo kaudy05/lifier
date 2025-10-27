@@ -22,10 +22,9 @@ const CadastroScreen: React.FC<Props> = ({ navigation }) => {
         try {
             const user = { nome, email, senha };
 
-            // Salva usuário no AsyncStorage
             await AsyncStorage.setItem('@user', JSON.stringify(user));
 
-            console.log("Usuário salvo:", user); // Debug no console
+            console.log("Usuário salvo:", user);
             Alert.alert('Sucesso', 'Usuário cadastrado!');
             navigation.navigate('Login');
         } catch (error) {
