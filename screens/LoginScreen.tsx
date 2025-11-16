@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
 import { loginStyles as styles } from '../styles/loginStyles';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getUser } from '../database/userRepository';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 type Props = { navigation: LoginScreenNavigationProp };
@@ -14,26 +14,19 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const userData = await AsyncStorage.getItem('@user');
-      console.log("Dados encontrados:", userData); // Debug
+      const user = await getUser(email, senha);
 
-      if (userData) {
-        const user = JSON.parse(userData);
-
-        if (user.email === email && user.senha === senha) {
-          Alert.alert('Sucesso', `Bem-vindo, ${user.nome}!`);
-          navigation.navigate('Home');
-        } else {
-          Alert.alert('Erro', 'Email ou senha incorretos');
-        }
+      if (user) {
+        Alert.alert('Sucesso', `Bem-vindo, ${user.nome}!`);
+        navigation.navigate('Home');
       } else {
-        Alert.alert('Erro', 'Nenhum usuário cadastrado');
+        Alert.alert('Erro', 'Email ou senha incorretos');
       }
     } catch (error) {
-      console.log("Erro ao buscar:", error);
+      console.log("Erro ao buscar usuário:", error);
       Alert.alert('Erro', 'Problema ao acessar os dados');
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
@@ -45,6 +38,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         value={email}
         onChangeText={setEmail}
       />
+
       <TextInput
         style={styles.input}
         placeholder="Senha"
