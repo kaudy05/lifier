@@ -1,35 +1,34 @@
-import { db } from "../database/sqlite";
-import { User } from "../src/User";
+import { db } from "./sqlite";
+import * as Crypto from "expo-crypto";
 
+export type User = {
+  id: number;
+  nome: string;
+  email: string;
+  senha: string; // HASH da senha
+};
 
 export async function createUser(nome: string, email: string, senha: string) {
+  const senhaHash = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    senha
+  );
+
   await db.runAsync(
     "INSERT INTO users (nome, email, senha) VALUES (?, ?, ?)",
-    [nome, email, senha]
+    [nome, email, senhaHash]
   );
+
+  return true;
 }
 
-
 export async function findUserByEmail(email: string): Promise<User | null> {
-  const user = await db.getFirstAsync<User>(
-    "SELECT * FROM users WHERE email = ?",
+  const result = await db.getFirstAsync(
+    "SELECT id, nome, email, senha FROM users WHERE email = ?",
     [email]
   );
 
-  return user ?? null;
-}
+  if (!result) return null;
 
-
-export async function getUser(email: string, senha: string): Promise<User | null> {
-  try {
-    const user = await db.getFirstAsync<User>(
-      "SELECT * FROM users WHERE email = ? AND senha = ?",
-      [email, senha]
-    );
-
-    return user ?? null;
-  } catch (error) {
-    console.log("Erro ao buscar usuário:", error);
-    return null;
-  }
+  return result as User; // <- evita erro de {}
 }

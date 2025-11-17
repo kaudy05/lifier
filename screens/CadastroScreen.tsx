@@ -1,95 +1,102 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../App';
-import { cadastroStyles as styles } from '../styles/cadastroStyles';
-import { createUser } from '../database/userRepository';
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import LoadingHourglass from "../components/LoadingHourglass";
+import { createUser, findUserByEmail } from "../database/userRepository";
 
-type CadastroScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Cadastro'>;
-type Props = { navigation: CadastroScreenNavigationProp };
+export default function CadastroScreen() {
+  const navigation = useNavigation<any>();
 
-const CadastroScreen: React.FC<Props> = ({ navigation }) => {
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [confirmSenha, setConfirmSenha] = useState('');
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleCadastro = async () => {
     if (!nome || !email || !senha) {
-      Alert.alert('Erro', 'Preencha todos os campos.');
+      Alert.alert("Erro", "Preencha todos os campos!");
       return;
     }
 
-    if (senha !== confirmSenha) {
-      Alert.alert('Erro', 'As senhas não coincidem.');
-      return;
-    }
+    setLoading(true);
 
     try {
+      // verifica se o email já existe
+      const existing = await findUserByEmail(email);
+      if (existing) {
+        setLoading(false);
+        Alert.alert("Erro", "Este e-mail já está cadastrado.");
+        return;
+      }
+
+      // salva o usuário corretamente
       await createUser(nome, email, senha);
 
-      Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
-      navigation.navigate('Login');
-    } catch (error: any) {
-      if (error?.message?.includes('UNIQUE constraint')) {
-        Alert.alert('Erro', 'Email já cadastrado.');
-      } else {
-        Alert.alert('Erro', 'Não foi possível cadastrar.');
-        console.log(error);
-      }
+      // pequena espera para mostrar a animação
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      setLoading(false);
+
+      navigation.navigate("Login");
+    } catch (err) {
+      console.log("Erro ao cadastrar:", err);
+      setLoading(false);
+      Alert.alert("Erro", "Não foi possível cadastrar o usuário.");
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Cadastro de Usuário</Text>
+      <Text style={styles.title}>Criar Conta</Text>
 
       <TextInput
-        style={styles.input}
         placeholder="Nome"
+        style={styles.input}
         value={nome}
         onChangeText={setNome}
       />
 
       <TextInput
-        style={styles.input}
         placeholder="Email"
+        style={styles.input}
         value={email}
         onChangeText={setEmail}
-        keyboardType="email-address"
       />
 
       <TextInput
-        style={styles.input}
         placeholder="Senha"
+        secureTextEntry
+        style={styles.input}
         value={senha}
         onChangeText={setSenha}
-        secureTextEntry
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Confirmar Senha"
-        value={confirmSenha}
-        onChangeText={setConfirmSenha}
-        secureTextEntry
+      <TouchableOpacity style={styles.btn} onPress={handleCadastro}>
+        <Text style={styles.btnText}>Cadastrar</Text>
+      </TouchableOpacity>
+
+      <LoadingHourglass
+        visible={loading}
+        message="Cadastro realizado com sucesso!"
+        onFinish={() => {}}
       />
-
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#4CAF50' }]}
-        onPress={handleCadastro}
-      >
-        <Text style={styles.buttonText}>Cadastrar</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#2196F3' }]}
-        onPress={() => navigation.navigate('Login')}
-      >
-        <Text style={styles.buttonText}>Voltar ao Login</Text>
-      </TouchableOpacity>
     </View>
   );
-};
+}
 
-export default CadastroScreen;
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20, justifyContent: "center" },
+  title: { fontSize: 28, fontWeight: "bold", marginBottom: 30 },
+  input: {
+    borderWidth: 1, borderColor: "#ccc",
+    padding: 12, borderRadius: 8, marginBottom: 15
+  },
+  btn: {
+    backgroundColor: "#3498db",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  btnText: { color: "#fff", fontSize: 17, fontWeight: "600" },
+});

@@ -1,32 +1,68 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../App';
-import { loginStyles as styles } from '../styles/loginStyles';
-import { getUser } from '../database/userRepository';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import * as Crypto from "expo-crypto";
 
-type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
-type Props = { navigation: LoginScreenNavigationProp };
+import { findUserByEmail } from "../database/userRepository";
+import LoadingHourglass from "../components/LoadingHourglass";
 
-const LoginScreen: React.FC<Props> = ({ navigation }) => {
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
+export default function LoginScreen() {
+  const navigation = useNavigation<any>();
+
+  const [email, setEmail] = useState<string>("");
+  const [senha, setSenha] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleLogin = async () => {
-    try {
-      const user = await getUser(email, senha);
-
-      if (user) {
-        Alert.alert('Sucesso', `Bem-vindo, ${user.nome}!`);
-        navigation.navigate('Home');
-      } else {
-        Alert.alert('Erro', 'Email ou senha incorretos');
-      }
-    } catch (error) {
-      console.log("Erro ao buscar usuário:", error);
-      Alert.alert('Erro', 'Problema ao acessar os dados');
+    if (!email.trim() || !senha) {
+      Alert.alert("Erro", "Preencha email e senha");
+      return;
     }
-  }
+
+    try {
+      setLoading(true);
+
+      // 1) Busca usuário pelo email
+      const user: any = await findUserByEmail(email.trim());
+
+      if (!user) {
+        setLoading(false);
+        Alert.alert("Erro", "Email não encontrado");
+        return;
+      }
+
+      // 2) Gera hash da senha digitada (mesmo algoritmo usado no createUser)
+      const senhaHashDigitada = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        senha
+      );
+
+      // 3) Compara com o hash salvo no banco (campo 'senha' conforme createUser)
+      if (senhaHashDigitada !== user.senha) {
+        setLoading(false);
+        Alert.alert("Erro", "Senha incorreta");
+        return;
+      }
+
+      // 4) Login OK
+      // Mostramos a animação e navegamos no onFinish para garantir o fluxo
+      setLoading(true); // já true
+      // aguenta a LoadingHourglass fechar por conta própria via onFinish
+      // passamos onFinish que navega para Home
+      // mas também setamos loading false dentro do onFinish
+    } catch (err) {
+      console.log("Erro no login:", err);
+      setLoading(false);
+      Alert.alert("Erro", "Não foi possível realizar login");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -36,32 +72,85 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         style={styles.input}
         placeholder="Email"
         value={email}
+        autoCapitalize="none"
+        keyboardType="email-address"
         onChangeText={setEmail}
       />
 
       <TextInput
         style={styles.input}
         placeholder="Senha"
+        secureTextEntry
         value={senha}
         onChangeText={setSenha}
-        secureTextEntry
       />
 
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#4CAF50' }]}
-        onPress={handleLogin}
-      >
+      <TouchableOpacity style={[styles.button, styles.loginButton]} onPress={async () => {
+        await handleLogin();
+        // após validar e setLoading(true), se validação OK, executar animação+nav:
+        // precisamos checar se user e senha OK — para simplificar, re-check aqui:
+        const user = await findUserByEmail(email.trim());
+        if (user) {
+          const senhaHashDigitada = await Crypto.digestStringAsync(
+            Crypto.CryptoDigestAlgorithm.SHA256,
+            senha
+          );
+          if (senhaHashDigitada === user.senha) {
+            // mostra animação e navega ao finalizar
+            setLoading(true);
+          }
+        }
+      }}>
         <Text style={styles.buttonText}>Entrar</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#2196F3' }]}
-        onPress={() => navigation.navigate('Cadastro')}
+        style={[styles.button, styles.linkButton]}
+        onPress={() => navigation.navigate("Cadastro")}
       >
         <Text style={styles.buttonText}>Cadastrar</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.forgot}
+        onPress={() => navigation.navigate("EsqueciSenha")}
+      >
+        <Text style={styles.forgotText}>Esqueci minha senha</Text>
+      </TouchableOpacity>
+
+      {/* LoadingHourglass: onFinish navega para Home e limpa loading */}
+      <LoadingHourglass
+        visible={loading}
+        message="Entrando..."
+        durationMs={900}
+        onFinish={() => {
+          setLoading(false);
+          navigation.navigate("Home");
+        }}
+      />
     </View>
   );
-};
+}
 
-export default LoginScreen;
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20, justifyContent: "center" },
+  title: { fontSize: 24, fontWeight: "700", marginBottom: 20, textAlign: "center" },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  button: {
+    padding: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  loginButton: { backgroundColor: "#27ae60" },
+  linkButton: { backgroundColor: "#2196F3" },
+  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  forgot: { marginTop: 6, alignSelf: "center" },
+  forgotText: { color: "#2196F3", fontWeight: "600" },
+});
