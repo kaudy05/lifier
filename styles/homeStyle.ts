@@ -37,6 +37,51 @@ export const homeStyles = StyleSheet.create({
     color: '#333',
   },
 
+  // campo pequeno de horário usado ao adicionar/editar hábito
+  timeInput: {
+    width: 80,
+    marginLeft: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
+    fontSize: 14,
+    color: '#333',
+    backgroundColor: '#fff'
+  },
+
+  addRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  addButton: {
+    marginLeft: 8,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2196F3',
+    elevation: 2,
+  },
+  addButtonDisabled: {
+    backgroundColor: '#9ec9f7',
+  },
+  smallError: {
+    color: '#F44336',
+    fontSize: 12,
+    marginTop: 6,
+    marginLeft: 4,
+  },
+
+  habitTime: {
+    color: '#666',
+    fontSize: 12,
+    marginTop: 2,
+  },
+
   // 🧾 Cards e seções
   card: {
     backgroundColor: '#fff',
@@ -85,12 +130,29 @@ export const homeStyles = StyleSheet.create({
   habitRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   habitText: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#222',
+  },
+  habitMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  timeBadge: {
+    backgroundColor: '#eef6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  timeBadgeText: {
+    color: '#1976D2',
+    fontWeight: '600',
+    fontSize: 12,
   },
 
   // ❌ Texto quando nada for encontrado

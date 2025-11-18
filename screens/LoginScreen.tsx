@@ -19,6 +19,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState<string>("");
   const [senha, setSenha] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   const handleLogin = async () => {
     if (!email.trim() || !senha) {
@@ -35,7 +36,7 @@ export default function LoginScreen() {
       if (!user) {
         setLoading(false);
         Alert.alert("Erro", "Email não encontrado");
-        return;
+        return null;
       }
 
       // 2) Gera hash da senha digitada (mesmo algoritmo usado no createUser)
@@ -48,19 +49,16 @@ export default function LoginScreen() {
       if (senhaHashDigitada !== user.senha) {
         setLoading(false);
         Alert.alert("Erro", "Senha incorreta");
-        return;
+        return null;
       }
 
-      // 4) Login OK
-      // Mostramos a animação e navegamos no onFinish para garantir o fluxo
-      setLoading(true); // já true
-      // aguenta a LoadingHourglass fechar por conta própria via onFinish
-      // passamos onFinish que navega para Home
-      // mas também setamos loading false dentro do onFinish
+      // 4) Login OK -> retorna o usuário para que o chamador decida a navegação
+      return user;
     } catch (err) {
       console.log("Erro no login:", err);
       setLoading(false);
       Alert.alert("Erro", "Não foi possível realizar login");
+      return null;
     }
   };
 
@@ -86,19 +84,10 @@ export default function LoginScreen() {
       />
 
       <TouchableOpacity style={[styles.button, styles.loginButton]} onPress={async () => {
-        await handleLogin();
-        // após validar e setLoading(true), se validação OK, executar animação+nav:
-        // precisamos checar se user e senha OK — para simplificar, re-check aqui:
-        const user = await findUserByEmail(email.trim());
+        const user = await handleLogin();
         if (user) {
-          const senhaHashDigitada = await Crypto.digestStringAsync(
-            Crypto.CryptoDigestAlgorithm.SHA256,
-            senha
-          );
-          if (senhaHashDigitada === user.senha) {
-            // mostra animação e navega ao finalizar
-            setLoading(true);
-          }
+          setCurrentUserId(user.id);
+          setLoading(true);
         }
       }}>
         <Text style={styles.buttonText}>Entrar</Text>
@@ -125,7 +114,8 @@ export default function LoginScreen() {
         durationMs={900}
         onFinish={() => {
           setLoading(false);
-          navigation.navigate("Home");
+          // navega passando userId para que a tela Home carregue dados específicos do usuário
+          navigation.navigate("Home", { userId: currentUserId });
         }}
       />
     </View>
