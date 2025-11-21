@@ -5,7 +5,7 @@ export type User = {
   id: number;
   nome: string;
   email: string;
-  senha: string; // HASH da senha
+  senha: string;
 };
 
 export async function createUser(nome: string, email: string, senha: string) {
@@ -30,5 +30,5 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 
   if (!result) return null;
 
-  return result as User; // <- evita erro de {}
+  return result as User;
 }

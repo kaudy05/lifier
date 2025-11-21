@@ -1,6 +1,8 @@
 import { StyleSheet } from 'react-native';
 
 export const homeStyles = StyleSheet.create({
+
+
   container: {
     flex: 1,
     backgroundColor: '#F9F9F9',
@@ -83,15 +85,23 @@ export const homeStyles = StyleSheet.create({
     fontSize: 14,
   },
   habitRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginBottom: 8,
   },
   habitText: {
     flex: 1,
     marginLeft: 10,
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#333",
   },
+
 
   // ❌ Texto quando nada for encontrado
   emptyText: {
@@ -110,4 +120,38 @@ export const homeStyles = StyleSheet.create({
     borderTopColor: '#ddd',
     backgroundColor: '#F5F5F5',
   },
+
+
+  input: {
+    borderWidth: 1,
+    borderColor: "#d0d0d0",
+    padding: 12,              // AUMENTADO
+    fontSize: 14,             // TEXTO MAIOR
+    borderRadius: 14,         // MAIS ARREDONDADO
+    backgroundColor: "#f7f7f7",
+    marginBottom: 12,
+  },
+
+  btn: {
+    backgroundColor: "#1E88E5",   // AZUL BONITO
+    paddingVertical: 14,          // MAIOR
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    alignItems: "center",
+    shadowColor: "#1E88E5",       // SOMBRA LEVE
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
+    elevation: 4,                 // SOMBRA NO ANDROID
+    marginTop: 10,
+  },
+
+  btnText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+  },
+
+
 });

@@ -25,7 +25,6 @@ export default function EsqueciSenhaScreen({ navigation }: Props) {
       return;
     }
 
-    // Email existe → ir para ResetarSenha
     navigation.navigate("ResetarSenha", { email });
   };
 

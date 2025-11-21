@@ -1,62 +1,45 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParamList } from "../App";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import { updatePassword } from "../database/userRepository";
 
-type NavProp = StackNavigationProp<RootStackParamList, "ResetarSenha">;
-
-const ResetarSenhaScreen = () => {
-  const navigation = useNavigation<NavProp>();
-  const route = useRoute();
-  
-  const email = (route.params as any)?.email;
+export default function ResetarSenhaScreen() {
+  const route = useRoute<any>();
+  const navigation = useNavigation<any>();
+  const { email } = route.params;
 
   const [novaSenha, setNovaSenha] = useState("");
 
-  const handleReset = async () => {
-    if (!novaSenha) {
-      Alert.alert("Erro", "Digite a nova senha");
+  const handleResetarSenha = async () => {
+    if (novaSenha.length < 6) {
+      Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres.");
       return;
     }
 
-    Alert.alert("Sucesso", "Senha alterada com sucesso!");
-    navigation.navigate("Login");
+    try {
+      await updatePassword(email, novaSenha);
+      Alert.alert("Sucesso", "Senha atualizada com sucesso!");
+      navigation.navigate("Login");
+    } catch (e) {
+      Alert.alert("Erro", "Não foi possível atualizar a senha.");
+    }
   };
 
   return (
     <View style={{ padding: 20 }}>
-      <Text style={{ fontSize: 22, marginBottom: 20 }}>Redefinir Senha</Text>
-
-      <Text style={{ marginBottom: 10 }}>Email: {email}</Text>
+      <Text>Digite a nova senha para o email:</Text>
+      <Text style={{ fontWeight: "bold", marginBottom: 10 }}>{email}</Text>
 
       <TextInput
-        placeholder="Nova senha"
         secureTextEntry
+        style={{ borderWidth: 1, padding: 10, marginVertical: 10 }}
         value={novaSenha}
         onChangeText={setNovaSenha}
-        style={{
-          borderWidth: 1,
-          padding: 10,
-          borderRadius: 8,
-          marginBottom: 20,
-        }}
       />
 
-      <TouchableOpacity
-        onPress={handleReset}
-        style={{
-          backgroundColor: "#4CAF50",
-          padding: 15,
-          borderRadius: 10,
-        }}
-      >
-        <Text style={{ color: "white", textAlign: "center", fontSize: 16 }}>
-          Salvar nova senha
-        </Text>
+      <TouchableOpacity onPress={handleResetarSenha} style={{ padding: 15, backgroundColor: "green" }}>
+        <Text style={{ color: "#fff" }}>Salvar senha</Text>
       </TouchableOpacity>
     </View>
   );
-};
-
-export default ResetarSenhaScreen;
+}

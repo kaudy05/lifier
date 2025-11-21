@@ -6,6 +6,10 @@ import {
   TouchableOpacity,
   Alert,
   StyleSheet,
+  Image,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Crypto from "expo-crypto";
@@ -29,8 +33,7 @@ export default function LoginScreen() {
     try {
       setLoading(true);
 
-      // 1) Busca usuário pelo email
-      const user: any = await findUserByEmail(email.trim());
+      const user = await findUserByEmail(email.trim());
 
       if (!user) {
         setLoading(false);
@@ -38,25 +41,18 @@ export default function LoginScreen() {
         return;
       }
 
-      // 2) Gera hash da senha digitada (mesmo algoritmo usado no createUser)
       const senhaHashDigitada = await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
         senha
       );
 
-      // 3) Compara com o hash salvo no banco (campo 'senha' conforme createUser)
       if (senhaHashDigitada !== user.senha) {
         setLoading(false);
         Alert.alert("Erro", "Senha incorreta");
         return;
       }
 
-      // 4) Login OK
-      // Mostramos a animação e navegamos no onFinish para garantir o fluxo
-      setLoading(true); // já true
-      // aguenta a LoadingHourglass fechar por conta própria via onFinish
-      // passamos onFinish que navega para Home
-      // mas também setamos loading false dentro do onFinish
+      console.log("Login OK!");
     } catch (err) {
       console.log("Erro no login:", err);
       setLoading(false);
@@ -65,92 +61,149 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tela de Login</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        onChangeText={setEmail}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Senha"
-        secureTextEntry
-        value={senha}
-        onChangeText={setSenha}
-      />
-
-      <TouchableOpacity style={[styles.button, styles.loginButton]} onPress={async () => {
-        await handleLogin();
-        // após validar e setLoading(true), se validação OK, executar animação+nav:
-        // precisamos checar se user e senha OK — para simplificar, re-check aqui:
-        const user = await findUserByEmail(email.trim());
-        if (user) {
-          const senhaHashDigitada = await Crypto.digestStringAsync(
-            Crypto.CryptoDigestAlgorithm.SHA256,
-            senha
-          );
-          if (senhaHashDigitada === user.senha) {
-            // mostra animação e navega ao finalizar
-            setLoading(true);
-          }
-        }
-      }}>
-        <Text style={styles.buttonText}>Entrar</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.button, styles.linkButton]}
-        onPress={() => navigation.navigate("Cadastro")}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.buttonText}>Cadastrar</Text>
-      </TouchableOpacity>
+        {/* LOGO */}
+        <Image
+          source={require("../assets/Lifier.png")}
+          style={styles.logo}
+        />
 
-      <TouchableOpacity
-        style={styles.forgot}
-        onPress={() => navigation.navigate("EsqueciSenha")}
-      >
-        <Text style={styles.forgotText}>Esqueci minha senha</Text>
-      </TouchableOpacity>
+        {/* TEXTO BEM-VINDO */}
+        <Text style={styles.welcome}>Seja bem-vindo!</Text>
 
-      {/* LoadingHourglass: onFinish navega para Home e limpa loading */}
-      <LoadingHourglass
-        visible={loading}
-        message="Entrando..."
-        durationMs={900}
-        onFinish={() => {
-          setLoading(false);
-          navigation.navigate("Home");
-        }}
-      />
-    </View>
+        {/* INPUT EMAIL */}
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          onChangeText={setEmail}
+        />
+
+        {/* INPUT SENHA */}
+        <TextInput
+          style={styles.input}
+          placeholder="Senha"
+          secureTextEntry
+          value={senha}
+          onChangeText={setSenha}
+        />
+
+        {/* BOTÃO LOGIN */}
+        <TouchableOpacity
+          style={[styles.button, styles.loginButton]}
+          onPress={async () => {
+            await handleLogin();
+
+            const user = await findUserByEmail(email.trim());
+            if (user) {
+              const senhaHashDigitada = await Crypto.digestStringAsync(
+                Crypto.CryptoDigestAlgorithm.SHA256,
+                senha
+              );
+              if (senhaHashDigitada === user.senha) {
+                setLoading(true);
+              }
+            }
+          }}
+        >
+          <Text style={styles.buttonText}>Entrar</Text>
+        </TouchableOpacity>
+
+        {/* BOTÃO CADASTRAR */}
+        <TouchableOpacity
+          style={styles.forgot}
+          onPress={() => navigation.navigate("Cadastro")}
+        >
+          <Text style={styles.forgotText}>Cadastrar</Text>
+        </TouchableOpacity>
+
+        {/* BOTÃO ESQUECI SENHA */}
+        <TouchableOpacity
+          style={styles.forgot}
+          onPress={() => navigation.navigate("EsqueciSenha")}
+        >
+          <Text style={styles.forgotText}>Esqueci minha senha</Text>
+        </TouchableOpacity>
+
+        {/* LOADING */}
+        <LoadingHourglass
+          visible={loading}
+          message="Entrando..."
+          durationMs={900}
+          onFinish={() => {
+            setLoading(false);
+            navigation.navigate("Home");
+          }}
+        />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: "center" },
-  title: { fontSize: 24, fontWeight: "700", marginBottom: 20, textAlign: "center" },
+  container: {
+    flexGrow: 1,
+    padding: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  logo: {
+    width: 350,
+    height: 350,
+    resizeMode: "contain",
+    marginBottom: 10,
+  },
+
+  welcome: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+
   input: {
+    width: "100%",
     borderWidth: 1,
     borderColor: "#ccc",
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
   },
+
   button: {
     padding: 14,
     borderRadius: 10,
     alignItems: "center",
     marginBottom: 10,
+    width: "100%",
   },
-  loginButton: { backgroundColor: "#27ae60" },
-  linkButton: { backgroundColor: "#2196F3" },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  forgot: { marginTop: 6, alignSelf: "center" },
-  forgotText: { color: "#2196F3", fontWeight: "600" },
+
+  loginButton: {
+    backgroundColor: "#1E88E5",
+  },
+
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  forgot: {
+    marginTop: 6,
+  },
+
+  forgotText: {
+    color: "#2196F3",
+    fontWeight: "600",
+  },
 });

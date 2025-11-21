@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import LoadingHourglass from "../components/LoadingHourglass";
-import { createUser, findUserByEmail } from "../database/userRepository";
+import { createUser } from "../database/userRepository"; // IMPORTANTE!
 
 export default function CadastroScreen() {
   const navigation = useNavigation<any>();
@@ -10,44 +9,57 @@ export default function CadastroScreen() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
+
+  const validarEmail = (email: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  const validarSenhaForte = (senha: string) => {
+    const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    return regex.test(senha);
+  };
 
   const handleCadastro = async () => {
-    if (!nome || !email || !senha) {
-      Alert.alert("Erro", "Preencha todos os campos!");
+    setErro("");
+
+    if (!nome.trim()) {
+      setErro("Digite seu nome.");
       return;
     }
 
-    setLoading(true);
+    if (!validarEmail(email)) {
+      setErro("Digite um email válido (ex: exemplo@gmail.com).");
+      return;
+    }
+
+    if (!validarSenhaForte(senha)) {
+      setErro("A senha deve ter no mínimo 6 caracteres, incluindo letra e número.");
+      return;
+    }
 
     try {
-      // verifica se o email já existe
-      const existing = await findUserByEmail(email);
-      if (existing) {
-        setLoading(false);
-        Alert.alert("Erro", "Este e-mail já está cadastrado.");
-        return;
+      const ok = await createUser(nome.trim(), email.trim(), senha.trim());
+
+      if (ok) {
+        Alert.alert("Sucesso", "Cadastro realizado com sucesso!");
+        navigation.navigate("Login");
       }
-
-      // salva o usuário corretamente
-      await createUser(nome, email, senha);
-
-      // pequena espera para mostrar a animação
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      setLoading(false);
-
-      navigation.navigate("Login");
-    } catch (err) {
-      console.log("Erro ao cadastrar:", err);
-      setLoading(false);
-      Alert.alert("Erro", "Não foi possível cadastrar o usuário.");
+    } catch (error: any) {
+      if (error?.message?.includes("UNIQUE constraint failed")) {
+        setErro("Este email já está cadastrado.");
+      } else {
+        setErro("Erro ao cadastrar usuário.");
+      }
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Criar Conta</Text>
+
+      {erro !== "" && <Text style={styles.erro}>{erro}</Text>}
 
       <TextInput
         placeholder="Nome"
@@ -60,6 +72,7 @@ export default function CadastroScreen() {
         placeholder="Email"
         style={styles.input}
         value={email}
+        autoCapitalize="none"
         onChangeText={setEmail}
       />
 
@@ -74,22 +87,25 @@ export default function CadastroScreen() {
       <TouchableOpacity style={styles.btn} onPress={handleCadastro}>
         <Text style={styles.btnText}>Cadastrar</Text>
       </TouchableOpacity>
-
-      <LoadingHourglass
-        visible={loading}
-        message="Cadastro realizado com sucesso!"
-        onFinish={() => {}}
-      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, justifyContent: "center" },
-  title: { fontSize: 28, fontWeight: "bold", marginBottom: 30 },
+  title: { fontSize: 28, fontWeight: "bold", marginBottom: 20 },
   input: {
-    borderWidth: 1, borderColor: "#ccc",
-    padding: 12, borderRadius: 8, marginBottom: 15
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  erro: {
+    color: "red",
+    marginBottom: 10,
+    fontSize: 16,
+    fontWeight: "600",
   },
   btn: {
     backgroundColor: "#3498db",

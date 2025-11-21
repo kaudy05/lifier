@@ -1,11 +1,11 @@
-export function isValidEmail(email: string): boolean {
+export const validarEmail = (email: string): boolean => {
+  if (!email) return false;
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
-}
+  return regex.test(email.trim());
+};
 
-export function isValidPassword(password: string): boolean {
-  // Senha forte:
-  // Min 8 caracteres, 1 maiúscula, 1 minúscula, 1 numero
-  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-  return regex.test(password);
-}
+export const validarSenha = (senha: string): boolean => {
+  if (!senha) return false;
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  return regex.test(senha);
+};
