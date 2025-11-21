@@ -16,7 +16,7 @@ import { createTables } from './database/sqlite';
 export type RootStackParamList = {
   Login: undefined;
   Cadastro: undefined; 
-  Home: undefined;
+  Home: { userId?: number | null };
   EsqueciSenha: undefined;
   ResetarSenha: { email: string };
 };
